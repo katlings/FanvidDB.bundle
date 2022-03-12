@@ -1,16 +1,22 @@
-API_KEY = ''
+import os
+import urllib2
+
+FANVIDDB_URL = 'https://fanviddb.com/'
+FANVIDDB_PATH = 'api/fanvids/'
+API_KEY = Prefs['fanviddb_api_key']
+Log.Info('API Key')
+Log.Info(API_KEY)
 
 def Start():
     Log.Info('Starting FanvidDB metadata agent!')
 
 
-def ValidatePrefs():
-    Log.Info('Validating metadata against preferences!')
-    global API_KEY
-    API_KEY = Prefs.get('fanviddb_api_key')
-    Log.Info('API Key')
+def search_fanviddb(data):
+    Log.Info('API key is')
     Log.Info(API_KEY)
-
+    http_headers = {'x-api-key': API_KEY}
+    url = FANVIDDB_URL + FANVIDDB_PATH
+    return JSON.ObjectFromURL(url, headers=http_headers, sleep=1.0)
 
 class FanvidDBAgent(Agent.Movies):
     name = 'FanvidDB'
@@ -37,19 +43,40 @@ class FanvidDBAgent(Agent.Movies):
         results.Sort('score', descending=True)
 
     def update(self, metadata, media, lang):
+        # extract all the useful information we can get out of the file
+        vid = media.items[0].parts[0]
+        filename = os.path.basename(vid.file)
+        directory = os.path.dirname(vid.file)
+        duration = vid.duration
+        Log.Info('duration: %s', duration)
+        art = vid.art
+        id_i_guess = vid.id
+        Log.Info('id: %s', id_i_guess)
+        size = vid.size
+        Log.Info('size: %s', size)
+        subs = vid.subtitles
+        thumbs = vid.thumbs
+        # can we look in the metadata of the file itself? seems like no
+        # so we have: filename, file path, duration, size
+
+        # maybe see if we've cached data but that might be a feature for v2
+
+        search_results = search_fanviddb(metadata)
+        Log.Info(search_results)
+        # get as much data as possible
         metadata.rating = 4.2  # out of 10 lmao
         metadata.content_rating = 'mature rating'
         #metadata.art
         #metadata.chapters
-        metadata.themes = ['theme a', 'theme b']
-        metadata.quotes = ['quote me once', 'quote me twice']
+#       metadata.themes = ['theme a', 'theme b']
+#       metadata.quotes = ['quote me once', 'quote me twice']
         metadata.year = 2222
         #metadata.duration
         metadata.rating_count = 5
-        metadata.genres = ['genre a', 'genre b']
-        #metadata.title
+#       metadata.genres = ['genre a', 'genre b']
+        metadata.title = 'a title'
         metadata.tagline = 'tagline believe it'
-        metadata.content_rating_age = 55
+        metadata.content_rating_age = 56
         #metadata.writers
         #metadata.collections
         metadata.trivia = 'sounds trivial to me'
